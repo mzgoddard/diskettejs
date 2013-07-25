@@ -1,0 +1,29 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mocha Tests</title>
+  <link rel="stylesheet" href="/node_modules/mocha/mocha.css" />
+</head>
+<body>
+  <div id="mocha"></div>
+  <script src="/node_modules/chai/chai.js"></script>
+  <script src="/node_modules/mocha/mocha.js"></script>
+  <script src="/testem.js"></script>
+  <script>
+    window.define = function(factory) {
+      try{ delete window.define; } catch(e){ window.define = void 0; } // IE
+      window.when = factory();
+    };
+    window.define.amd = {};
+  </script>
+  <script src="/node_modules/when/when.js"></script>
+  <script src="/diskette.js"></script>
+  <script>mocha.setup('qunit')</script>
+  <script src="testconcat.js"></script>
+  <script>
+    mocha.checkLeaks();
+    mocha.globals(['jQuery', '$', 'Diskette']);
+    mocha.run();
+  </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "framework": "mochi",
+  "src_files": [ "lib/*.js", "test/*.js" ],
+  "test_page": "test/index.html",
+  "launchers": {
+    "Mocha": {
+      "command": "node_modules/.bin/mocha -R tap -u qunit test/*.js",
+      "protocol": "tap"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "files": [
+    {
+      "name": "doublealphabet.txt",
+      "blocks": [{}, {}]
+    }
+  ],
+
+  "blocks": [
+    {
+      "path": "data0",
+      "ranges": [
+        {
+          "filename": "doublealphabet.txt",
+          "index": 0,
+          "start": 0,
+          "end": 32
+        }
+      ]
+    },
+    {
+      "path": "data1",
+      "ranges": [
+        {
+          "filename": "doublealphabet.txt",
+          "index": 1,
+          "start": 0,
+          "end": 20
+        }
+      ]
+    }
+  ]
+}

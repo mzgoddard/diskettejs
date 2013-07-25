@@ -1,0 +1,3 @@
+#!/usr/bin/env node
+var convert = require( '../lib/convert' );
+var diskette = require( '../index' );
