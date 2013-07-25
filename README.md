@@ -2,6 +2,8 @@
 
 Diskette makes it easy to package game assets, stream those assets for your web game into a smart local cache system if available, and let you start gameplay before all the content has finished downloading. Diskette in the future will easily work with ThreeJS, EaselJS, SoundJS, and other audio/visual browser systems.
 
+[![Build Status](https://drone.io/github.com/mzgoddard/diskettejs/status.png)](https://drone.io/github.com/mzgoddard/diskettejs/latest)
+
 ## Install
 
 When ready, it'll be published in NPM or Bower. It has a script that runs in Node (and may get a grunt plugin and connect middleware) but its primary use is as a asset manager in the browser.
