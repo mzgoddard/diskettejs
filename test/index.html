@@ -9,6 +9,7 @@
   <script src="/node_modules/chai/chai.js"></script>
   <script src="/node_modules/mocha/mocha.js"></script>
   <script src="/testem.js"></script>
+  <script src="/node_modules/crc32/lib/crc32.js"></script>
   <script>
     window.define = function(factory) {
       try{ delete window.define; } catch(e){ window.define = void 0; } // IE
@@ -20,6 +21,7 @@
   <script src="/diskette.js"></script>
   <script>mocha.setup('qunit')</script>
   <script src="testconcat.js"></script>
+  <script src="testconvert.js"></script>
   <script>
     mocha.checkLeaks();
     mocha.globals(['jQuery', '$', 'Diskette']);

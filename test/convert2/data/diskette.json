@@ -1,0 +1,6 @@
+{
+  "files": [ "wallart.jpg", "tower.jpg" ],
+  "options": {
+    "bufferSize": 16383
+  }
+}

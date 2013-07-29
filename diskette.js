@@ -332,5 +332,7 @@
     }
   };
 
+  Diskette.when = when;
+
   return Diskette;
 }));

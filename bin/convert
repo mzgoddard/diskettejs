@@ -1,3 +1,65 @@
 #!/usr/bin/env node
-var convert = require( '../lib/convert' );
-var diskette = require( '../index' );
+
+//
+// Read a config file and output a metadata file with data files that contain
+// parts of the concatenated whole of the files listed in config.
+//
+
+var optimist = require( 'optimist' );
+
+var options = (function( optimist ) {
+  optimist = new optimist( process.argv.slice( 2 ) );
+
+  optimist.options({
+    'config': {
+      'alias': 'c',
+      'default': 'diskette.json',
+      'description': 'input file listing files to concat.',
+      'type': 'string'
+    },
+
+    'buffer-size': {
+      'description': 'size of the buffer to write blocks of.',
+      'type': 'number'
+    },
+
+    'input-directory': {
+      'alias': 'I',
+      'default': 'data',
+      'description': 'directry to read content files from.',
+      'type': 'string'
+    },
+
+    'output-directory': {
+      'alias': 'O',
+      'default': 'dist/data',
+      'description': 'directory to write concated data to.',
+      'type': 'string'
+    },
+
+    'metadata-output': {
+      'default': 'diskette.json',
+      'description': 'relative path to output-directory to write the metadata.'
+    },
+
+    'help': {
+      'alias': 'h',
+      'description': 'print help and exit.'
+    }
+  });
+
+  if ( optimist.argv.help ) {
+    optimist.showHelp();
+    process.exit( 0 );
+  }
+
+  return optimist.argv;
+}( optimist ));
+
+require( '../src/main' )( {
+  config: options.config,
+  bufferSize: options[ 'buffer-size' ],
+  inputDirectory: options[ 'input-directory' ],
+  outputDirectory: options[ 'output-directory' ],
+  metadataPath: options[ 'metadata-output' ]
+} );

@@ -10,7 +10,7 @@
 
   suite( 'concat' );
 
-  test( 'complete', function( done ) {
+  test( 'load', function( done ) {
     assert.ok( Diskette );
 
     var c = new Diskette();
@@ -22,13 +22,15 @@
     assert.ok( Diskette );
 
     var c = new Diskette();
-    c.config( 'concat/config.json' );
-    c.promise.otherwise( done );
     c.read( 'doublealphabet.txt', 'string' ).then(function( value ) {
       assert.equal(
         value,
         'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz'
       );
     }).then( done, done );
+
+    // You can set the config file after reads are requested.
+    c.config( 'concat/config.json' );
+    c.promise.otherwise( done );
   });
 }());

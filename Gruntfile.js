@@ -14,6 +14,12 @@ module.exports = function(grunt) {
         }
       },
 
+      node: {
+        files: {
+          src: [ 'src/main.js', 'bin/convert' ]
+        }
+      },
+
       test: {
         options: {
           globals: {

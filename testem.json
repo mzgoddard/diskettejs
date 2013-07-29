@@ -1,7 +1,9 @@
 {
   "framework": "mochi",
-  "src_files": [ "lib/*.js", "test/*.js" ],
+  "src_files": [ "lib/*.js", "test/test*.js" ],
   "test_page": "test/index.html",
+  "before_tests": "test/before.js",
+  "after_tests": "test/after.js",
   "launchers": {
     "Mocha": {
       "command": "node_modules/.bin/mocha -R tap -u qunit test/*.js",
