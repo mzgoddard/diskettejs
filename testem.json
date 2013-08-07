@@ -1,11 +1,17 @@
 {
   "framework": "mochi",
-  "src_files": [ "lib/*.js", "test/test*.js" ],
+  "src_files": [ "diskette.js", "lib/*.js", "test/test*.js" ],
+  "serve_files": [
+    "diskette.js",
+    "lib/*",
+    "test/**/*",
+    "testdist/**/*"
+  ],
   "test_page": "test/index.html",
   "before_tests": "test/after.js && test/before.js",
   "launchers": {
     "Mocha": {
-      "command": "node_modules/.bin/mocha -R tap -u qunit test/*.js",
+      "command": "node_modules/.bin/mocha -R tap -u qunit test/test*.js",
       "protocol": "tap"
     }
   }
