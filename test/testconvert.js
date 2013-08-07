@@ -11,16 +11,12 @@
   suite( 'convert' );
 
   test( 'load single file', function( done ) {
-    assert.ok( Diskette );
-
     var c = new Diskette();
     c.config( 'convert1/dist/diskette.json' );
     c.promise.yield( undefined ).then( done, done );
   });
 
   test( 'file check single file', function( done ) {
-    assert.ok( Diskette );
-
     var c = new Diskette();
     c.read( 'pi.json', 'binary' ).then(function( value ) {
       value = new Uint8Array( value );
@@ -34,16 +30,12 @@
   });
 
   test( 'load two files', function( done ) {
-    assert.ok( Diskette );
-
     var c = new Diskette();
     c.config( 'convert2/dist/diskette.json' );
     c.promise.yield( undefined ).then( done, done );
   });
 
   test( 'file check two files', function( done ) {
-    assert.ok( Diskette );
-
     var c = new Diskette();
     Diskette.when()
       .then(function() {
