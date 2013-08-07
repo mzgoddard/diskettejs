@@ -30,7 +30,11 @@
         xhr.open( 'GET', path );
         xhr.responseType = responseType === 'string' ? '' : 'blob';
         xhr.onload = function( e ) {
-          defer.resolve( xhr.response );
+          if ( xhr.status >= 400 ) {
+            defer.reject( new Error( 'Server returned an error.' ) );
+          } else {
+            defer.resolve( xhr.response );
+          }
         };
         xhr.onerror = function( e ) {
           defer.reject( e );
@@ -46,6 +50,9 @@
     this._configPath = '';
     this._config = {};
     this._files = {};
+
+    this._whenConfigDefer = when.defer();
+    this._whenConfig = this._whenConfigDefer.promise;
 
     this._dbDefer = when.defer();
     this._dbPromise = this._dbDefer.promise;
@@ -76,8 +83,8 @@
 
       req.onsuccess = function() {
         var db = this.result;
-        self._dbDefer.resolve();
         db.close();
+        self._dbDefer.resolve();
       };
       req.onerror = self._dbDefer.reject;
     };
@@ -109,7 +116,8 @@
       var objectStore = db
         .transaction( self._configPath, 'readonly' )
         .objectStore( self._configPath );
-      var request = objectStore.get( file.config.name );
+
+      var request = objectStore.get( file.config.name || file.config );
 
       request.onsuccess = function() {
         var contents = this.result;
@@ -122,7 +130,7 @@
 
           var request = objectStore.put(
             this.result,
-            file.config.name
+            file.config.name || file.config
           );
 
           request.onsuccess = function() {
@@ -195,7 +203,7 @@
     var file = this._files[ path ];
     if ( !file ) {
       file = this._files[ path ] = {
-        config: {},
+        config: { name: path },
         blocks: [],
         _complete: when.defer(),
         complete: null,
@@ -208,66 +216,171 @@
     return file;
   };
 
+  var _isFileListed = function( path ) {
+    if ( !this._config || !this._config.files ) {
+      return false;
+    }
+
+    for ( var i = 0; i < this._config.files.length; ++i ) {
+      var file = this._config.files[ i ];
+      if ( ( file.name || file ) === path ) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  var _getBaseUrl = function( path ) {
+    return this._configPath
+      .substring( 0, this._configPath.lastIndexOf( '/' ) + 1 );
+  };
+
+  var _loadFile = function( name ) {
+    var self = this;
+    var baseUrl = _getBaseUrl.call( self );
+
+    var file = _getFile.call( self, name );
+
+    if ( !file._complete ) {
+      return file.complete;
+    }
+
+    var complete = file._complete;
+    file._complete = null;
+    file.complete = load( baseUrl + name, 'binary' ).then(function( data ) {
+      return _writeBlock.call( self, file, data )
+        .yield( file.config )
+        .then( complete.resolve, complete.reject, complete.notify );
+    });
+
+    return file.complete;
+  };
+
   var _loadBlocks = function() {
     var allComplete = [];
     var baseUrl =
       this._configPath.substring( 0, this._configPath.lastIndexOf( '/' ) + 1 );
 
-    this._config.files.forEach(function( file ) {
-      var filePromiseSet = _getFile.call( this, file.name );
-      filePromiseSet.config = file;
-      filePromiseSet.blocks =
-        file.blocks.map(function() { return when.defer(); });
-
-      var complete = filePromiseSet._complete;
-      filePromiseSet.complete = when.map( filePromiseSet.blocks, function( v ) {
-        return v.promise;
-      }).yield( filePromiseSet.config )
-        .then( complete.resolve, complete.reject, complete.notify );
-      allComplete.push( filePromiseSet.complete );
-    }, this );
-
     var self = this;
-    this._config.blocks.forEach(function( block ) {
-      load( baseUrl + block.path, 'binary' ).then(function( data ) {
-        block.ranges.forEach(function( range ) {
-          var file = self._files[ range.filename ];
-          var fileBlocks = file.blocks;
-          var blockDefer = fileBlocks[ range.index ];
+    self._config.files.forEach(function( file ) {
+      var filePromiseSet = _getFile.call( self, file.name || file );
+      filePromiseSet.config =
+        typeof file === 'string' ? { name: file } : file;
 
-          when.all(
-            fileBlocks.slice( 0, range.index )
-              .map(function( v ) { return v.promise; })
-          ).then(function( values ) {
-            return _writeBlock.call(
-              self, file, data.slice( range.start, range.end )
-            );
-          }).then( blockDefer.resolve, blockDefer.reject, blockDefer.notify );
+      if ( file.blocks ) {
+        filePromiseSet.blocks =
+          file.blocks.map(function() { return when.defer(); });
+
+        filePromiseSet.complete = when.map(
+          filePromiseSet.blocks,
+          function( v ) {
+            return v.promise;
+          }
+        ).yield( filePromiseSet.config );
+
+        var complete = filePromiseSet._complete;
+        filePromiseSet.complete
+          .then( complete.resolve, complete.reject, complete.notify );
+      } else {
+        _loadFile.call( this, file.name || file );
+      }
+
+      allComplete.push( filePromiseSet.complete );
+    }, self );
+
+    if ( self._config.blocks ) {
+      self._config.blocks.forEach(function( block ) {
+        load( baseUrl + block.path, 'binary' ).then(function( data ) {
+          block.ranges.forEach(function( range ) {
+            var file = self._files[ range.filename ];
+            var fileBlocks = file.blocks;
+            var blockDefer = fileBlocks[ range.index ];
+
+            when.all(
+              fileBlocks.slice( 0, range.index )
+                .map(function( v ) { return v.promise; })
+            ).then(function( values ) {
+              return _writeBlock.call(
+                self, file, data.slice( range.start, range.end )
+              );
+            }).then( blockDefer.resolve, blockDefer.reject, blockDefer.notify );
+          });
         });
-      });
-    }, this );
+      }, self );
+    }
 
     return when.all( allComplete );
   };
 
+  var _loadUnlistedFiles = function() {
+    var self = this;
+    var baseUrl = _getBaseUrl.call( self );
+    var promises = [];
+
+    for ( var name in self._files ) {
+      if ( !_isFileListed.call( self, name ) ) {
+        promises.push( _loadFile.call( self, name ) );
+      }
+    }
+
+    return when.all( promises );
+  };
+
   Diskette.prototype.config = function( path ) {
+    if ( this._configPath ) {
+      throw new Error( 'Diskette configuration path already set.' );
+    }
+
     var self = this;
     var defer = this._defer;
     self._configPath = path;
     _initDb.call( self );
     load( path, 'string' ).then(function( data ) {
       self._config = JSON.parse( data );
+      self._whenConfigDefer.resolve( self._config );
+      _loadUnlistedFiles.call( self );
+
       return self._dbPromise.then(function() {
         return _loadBlocks.call( self );
       });
     }).then( defer.resolve, defer.reject, defer.notify );
   };
 
+  Diskette.prototype.fallback = function( path ) {
+    if ( this._configPath ) {
+      throw new Error( 'Diskette configuration path already set.' );
+    }
+
+    var self = this;
+    var defer = this._defer;
+
+    if ( path[ path.length - 1 ] !== '/' ) {
+      path += '/';
+    }
+    self._configPath = path;
+
+    _initDb.call( self ).then( defer.resolve, defer.reject, defer.notify );
+
+    self._config = {};
+    self._whenConfigDefer.resolve( self._config );
+    _loadUnlistedFiles.call( self );
+  };
+
   Diskette.prototype.read = function( path, type ) {
     // We don't hold all contents, so read per request.
     var self = this;
-    return _getFile.call( self, path ).complete.then(function( file ) {
-      return _readFile.call( self, file, type );
+    return self._whenConfig.then(function() {
+      if ( !_isFileListed.call( self, path ) ) {
+        return _loadFile.call( self, path ).then(function() {
+          return _getFile.call( self, path ).complete.then(function( file ) {
+            return _readFile.call( self, file, type );
+          });
+        });
+      } else {
+        return _getFile.call( self, path ).complete.then(function( file ) {
+          return _readFile.call( self, file, type );
+        });
+      }
     });
   };
 
