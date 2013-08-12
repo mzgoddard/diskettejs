@@ -72,6 +72,7 @@
         var db = this.result;
 
         // reset for now
+        console.log( db.objectStoreNames );
         if ( db.objectStoreNames.contains( self._configPath )) {
           db.deleteObjectStore( self._configPath );
         }
@@ -363,10 +364,9 @@
     var self = this;
     var defer = this._defer;
 
-    path += '/fakefile.json';
-    // if ( path[ path.length - 1 ] !== '/' ) {
-    //   path += '/';
-    // }
+    if ( path[ path.length - 1 ] !== '/' ) {
+      path += '/';
+    }
     self._configPath = path;
 
     _initDb.call( self )
