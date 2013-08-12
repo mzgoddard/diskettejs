@@ -380,18 +380,20 @@
   Diskette.prototype.read = function( path, type ) {
     // We don't hold all contents, so read per request.
     var self = this;
-    return self._whenConfig.then(function() {
-      if ( !_isFileListed.call( self, path ) ) {
-        return _loadFile.call( self, path ).then(function() {
+    return self._dbPromise.then(function() {
+      return self._whenConfig.then(function() {
+        if ( !_isFileListed.call( self, path ) ) {
+          return _loadFile.call( self, path ).then(function() {
+            return _getFile.call( self, path ).complete.then(function( file ) {
+              return _readFile.call( self, file, type );
+            });
+          });
+        } else {
           return _getFile.call( self, path ).complete.then(function( file ) {
             return _readFile.call( self, file, type );
           });
-        });
-      } else {
-        return _getFile.call( self, path ).complete.then(function( file ) {
-          return _readFile.call( self, file, type );
-        });
-      }
+        }
+      });
     });
   };
 
