@@ -334,8 +334,12 @@
     var self = this;
     var defer = this._defer;
     self._configPath = path;
-    _initDb.call( self );
-    load( path, 'string' ).then(function( data ) {
+    when.all([
+      _initDb.call( self ),
+      load( path, 'string' )
+    ]).then(function( values ) {
+      var data = values[1];
+
       self._config = JSON.parse( data );
       self._whenConfigDefer.resolve( self._config );
       _loadUnlistedFiles.call( self );
@@ -359,11 +363,13 @@
     }
     self._configPath = path;
 
-    _initDb.call( self ).then( defer.resolve, defer.reject, defer.notify );
-
-    self._config = {};
-    self._whenConfigDefer.resolve( self._config );
-    _loadUnlistedFiles.call( self );
+    _initDb.call( self )
+      .then( defer.resolve, defer.reject, defer.notify )
+      .then(function() {
+        self._config = {};
+        self._whenConfigDefer.resolve( self._config );
+        _loadUnlistedFiles.call( self );
+      });
   };
 
   Diskette.prototype.read = function( path, type ) {
