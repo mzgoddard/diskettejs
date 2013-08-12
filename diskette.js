@@ -363,9 +363,10 @@
     var self = this;
     var defer = this._defer;
 
-    if ( path[ path.length - 1 ] !== '/' ) {
-      path += '/';
-    }
+    path += '/fakefile.json';
+    // if ( path[ path.length - 1 ] !== '/' ) {
+    //   path += '/';
+    // }
     self._configPath = path;
 
     _initDb.call( self )
