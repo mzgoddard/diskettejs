@@ -247,7 +247,11 @@
 
     var complete = file._complete;
     file._complete = null;
-    file.complete = load( baseUrl + name, 'binary' ).then(function( data ) {
+    file.complete = when.all([
+      self._dbPromise,
+      load( baseUrl + name, 'binary' )
+    ]).then(function( values ) {
+      var data = values[ 1 ];
       return _writeBlock.call( self, file, data )
         .yield( file.config )
         .then( complete.resolve, complete.reject, complete.notify );
@@ -334,6 +338,7 @@
     var self = this;
     var defer = this._defer;
     self._configPath = path;
+
     when.all([
       _initDb.call( self ),
       load( path, 'string' )
