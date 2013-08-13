@@ -72,7 +72,6 @@
         var db = this.result;
 
         // reset for now
-        console.log( db.objectStoreNames );
         if ( db.objectStoreNames.contains( self._configPath )) {
           db.deleteObjectStore( self._configPath );
         }
@@ -373,8 +372,11 @@
       .then( defer.resolve, defer.reject, defer.notify )
       .then(function() {
         self._config = {};
-        self._whenConfigDefer.resolve( self._config );
-        _loadUnlistedFiles.call( self );
+        setTimeout(
+          self._whenConfigDefer.resolve.bind( null, self._config ),
+          15
+        );
+        // setTimeout( _loadUnlistedFiles.bind( self ), 15 );
       });
   };
 
