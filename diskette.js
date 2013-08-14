@@ -76,12 +76,9 @@
           db.deleteObjectStore( db.objectStoreNames.item( 0 ) );
         }
 
-        db.createObjectStore( '_objectStore', {
+        db.createObjectStore( self._configPath, {
           autoIncrement: false
         } );
-        // db.createObjectStore( self._configPath, {
-        //   autoIncrement: false
-        // } );
       };
 
       req.onsuccess = function() {
@@ -97,10 +94,22 @@
 
   var _getDb = function() {
     var defer = when.defer();
+    var self = this;
     var req = indexedDB.open( '_diskette', 1 );
+
+    req.onupgradeneeded = function() {
+      db.createObjectStore( self._configPath, {
+        autoIncrement: false
+      } );
+    };
 
     req.onsuccess = function() {
       var db = this.result;
+      if ( !db.objectStoreNames.contains( self._configPath ) ) {
+        defer.reject( new Error( 'Somehow missing the object store.' ) );
+        db.close();
+        return;
+      }
       defer.resolve( db );
     };
     req.onerror = defer.reject;
@@ -117,8 +126,8 @@
       db = _db;
 
       var objectStore = db
-        .transaction( '_objectStore', 'readonly' )
-        .objectStore( '_objectStore' );
+        .transaction( self._configPath, 'readonly' )
+        .objectStore( self._configPath );
 
       var request = objectStore.get( file.config.name || file.config );
 
@@ -128,8 +137,8 @@
         var fileReader = new FileReader();
         fileReader.onloadend = function() {
           var objectStore = db
-            .transaction( '_objectStore', 'readwrite' )
-            .objectStore( '_objectStore' );
+            .transaction( self._configPath, 'readwrite' )
+            .objectStore( self._configPath );
 
           var request = objectStore.put(
             this.result,
@@ -167,8 +176,8 @@
       db = _db;
 
       var objectStore = db
-        .transaction( '_objectStore', 'readonly' )
-        .objectStore( '_objectStore' );
+        .transaction( self._configPath, 'readonly' )
+        .objectStore( self._configPath );
       var request = objectStore.get( file.name );
 
       request.onsuccess = function() {
