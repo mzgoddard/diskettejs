@@ -76,9 +76,12 @@
           db.deleteObjectStore( db.objectStoreNames.item( 0 ) );
         }
 
-        db.createObjectStore( self._configPath, {
+        db.createObjectStore( '_objectStore', {
           autoIncrement: false
         } );
+        // db.createObjectStore( self._configPath, {
+        //   autoIncrement: false
+        // } );
       };
 
       req.onsuccess = function() {
@@ -114,8 +117,8 @@
       db = _db;
 
       var objectStore = db
-        .transaction( self._configPath, 'readonly' )
-        .objectStore( self._configPath );
+        .transaction( '_objectStore', 'readonly' )
+        .objectStore( '_objectStore' );
 
       var request = objectStore.get( file.config.name || file.config );
 
@@ -125,8 +128,8 @@
         var fileReader = new FileReader();
         fileReader.onloadend = function() {
           var objectStore = db
-            .transaction( self._configPath, 'readwrite' )
-            .objectStore( self._configPath );
+            .transaction( '_objectStore', 'readwrite' )
+            .objectStore( '_objectStore' );
 
           var request = objectStore.put(
             this.result,
@@ -164,8 +167,8 @@
       db = _db;
 
       var objectStore = db
-        .transaction( self._configPath, 'readonly' )
-        .objectStore( self._configPath );
+        .transaction( '_objectStore', 'readonly' )
+        .objectStore( '_objectStore' );
       var request = objectStore.get( file.name );
 
       request.onsuccess = function() {
