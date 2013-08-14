@@ -374,7 +374,7 @@
         self._config = {};
         setTimeout(
           self._whenConfigDefer.resolve.bind( null, self._config ),
-          15
+          50
         );
         // setTimeout( _loadUnlistedFiles.bind( self ), 15 );
       });
