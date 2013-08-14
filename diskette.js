@@ -72,13 +72,13 @@
         var db = this.result;
 
         // reset for now
-        if ( db.objectStoreNames.contains( self._configPath )) {
-          db.deleteObjectStore( self._configPath );
+        while ( db.objectStoreNames.length ) {
+          db.deleteObjectStore( db.objectStoreNames.item( 0 ) );
         }
 
         db.createObjectStore( self._configPath, {
           autoIncrement: false
-        });
+        } );
       };
 
       req.onsuccess = function() {
@@ -286,7 +286,7 @@
         filePromiseSet.complete
           .then( complete.resolve, complete.reject, complete.notify );
       } else {
-        _loadFile.call( this, file.name || file );
+        _loadFile.call( self, file.name || file );
       }
 
       allComplete.push( filePromiseSet.complete );
@@ -347,7 +347,7 @@
 
       self._config = JSON.parse( data );
       self._whenConfigDefer.resolve( self._config );
-      _loadUnlistedFiles.call( self );
+      // _loadUnlistedFiles.call( self );
 
       return self._dbPromise.then(function() {
         return _loadBlocks.call( self );
