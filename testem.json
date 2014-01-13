@@ -14,5 +14,7 @@
       "command": "node_modules/.bin/mocha -R tap -u qunit test/test*.js",
       "protocol": "tap"
     }
-  }
+  },
+  "launch_in_ci": [ "chrome", "firefox", "Opera" ],
+  "launch_in_dev": [ "chrome" ]
 }
