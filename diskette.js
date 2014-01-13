@@ -1,7 +1,11 @@
 (function( fn ) {
-  window.Diskette = fn(
-    typeof diskette !== 'undefined' ? diskette : { when: window.when }
-  );
+  if ( typeof window !== 'undefined' ) {
+    window.Diskette = fn(
+      typeof diskette !== 'undefined' ? diskette : { when: window.when }
+    );
+  } else if ( typeof module !== 'undefined' ) {
+    module.exports = fn();
+  }
 }(function( diskette ) {
   var slice = [].slice;
 

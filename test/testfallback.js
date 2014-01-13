@@ -1,11 +1,11 @@
 (function() {
-  var assert, diskette;
+  var assert, Diskette;
   if ( typeof window !== 'undefined' ) {
     assert = chai.assert;
-    diskette = window.diskette;
+    Diskette = window.Diskette;
   } else {
     assert = require( 'chai' ).assert;
-    diskette = require( '../index' );
+    Diskette = require( '../diskette' );
   }
 
   suite( 'fallback' );
