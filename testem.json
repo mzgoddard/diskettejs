@@ -1,14 +1,14 @@
 {
   "framework": "mochi",
-  "src_files": [ "diskette.js", "lib/*.js", "test/test*.js" ],
+  "src_files": [ "index.js", "src/*.js", "test/test*.js" ],
   "serve_files": [
-    "diskette.js",
-    "lib/*",
+    "dist/*",
     "test/**/*",
     "testdist/**/*"
   ],
   "test_page": "test/index.html",
-  "before_tests": "test/after.js && test/before.js",
+  "before_tests": "grunt webpack && test/after.js && test/before.js",
+  "on_exit": "test/after.js",
   "launchers": {
     "Mocha": {
       "command": "node_modules/.bin/mocha -R tap -u qunit test/test*.js",

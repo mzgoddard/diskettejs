@@ -10,7 +10,7 @@ module.exports = function(grunt) {
 
       lib: {
         files: {
-          src: 'diskette.js'
+          src: [ 'index.js', 'src/*.js' ]
         }
       },
 
@@ -39,27 +39,10 @@ module.exports = function(grunt) {
       }
     },
 
-    concat: {
-      diskette: {
-        files: {
-          'dist/diskette.js': [
-            'iife/head.js',
-            'node_modules/when/when.js',
-            'diskette.js',
-            'iife/tail.js'
-          ]
-        },
-        separator: ';'
-      }
-    },
-
     uglify: {
       diskette: {
-        files: {
-          'dist/diskette.min.js': [
-            'dist/diskette.js'
-          ]
-        }
+        src: 'dist/diskette.js',
+        dest: 'dist/diskette.min.js'
       }
     },
 
@@ -70,18 +53,32 @@ module.exports = function(grunt) {
       diskette: {
         src: 'testem.json'
       }
+    },
+
+    webpack: {
+      diskette: {
+        entry: './index.js',
+        output: {
+          path: 'dist/',
+          filename: 'diskette.js',
+          sourceMapFilename: '[file].map',
+          pathInfo: true
+        },
+
+        devtool: 'source-map'
+      }
     }
 
   });
 
-  grunt.loadNpmTasks( 'grunt-contrib-concat' );
   grunt.loadNpmTasks( 'grunt-contrib-uglify' );
   grunt.loadNpmTasks( 'grunt-contrib-jshint' );
   grunt.loadNpmTasks( 'grunt-testem' );
+  grunt.loadNpmTasks( 'grunt-webpack' );
 
   grunt.registerTask( 'test', [ 'jshint', 'testem' ]);
 
-  grunt.registerTask( 'debug', [ 'concat' ]);
+  grunt.registerTask( 'debug', [ 'webpack' ]);
 
   grunt.registerTask( 'release', [ 'debug', 'uglify' ]);
 
