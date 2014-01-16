@@ -22,6 +22,13 @@ function Diskette() {
   this.promise = this._defer.promise;
 }
 
+// Mixin events into Diskette.
+events.mixin( Diskette.prototype );
+
+// Other code may use Diskette's version of when ...
+Diskette.when = when;
+
+// Initialize the DB. Currently that means deleting it and creating a new one.
 var _initDb = function() {
   var self = this;
   var req = indexedDB.deleteDatabase( '_diskette' );
@@ -53,6 +60,7 @@ var _initDb = function() {
   return self._dbPromise;
 };
 
+// Open a connection to the database.
 var _getDb = function() {
   var defer = when.defer();
   var req = indexedDB.open( '_diskette', 1 );
@@ -65,6 +73,7 @@ var _getDb = function() {
   return defer.promise;
 };
 
+// Write a loaded block to the database.
 var _writeBlock = function( file, data ) {
   var defer = when.defer();
 
@@ -116,6 +125,7 @@ var _writeBlock = function( file, data ) {
   return defer.promise;
 };
 
+// Read the contents of a file from a database.
 var _readFile = function( file, type ) {
   var defer = when.defer();
 
@@ -156,10 +166,12 @@ var _readFile = function( file, type ) {
   return defer.promise;
 };
 
+// Read a file as a url from the database.
 var _getUrl = function( file ) {
   return _readFile.call( this, file, 'url' );
 };
 
+// Grab a file's metadata from the diskette.
 var _getFile = function( path ) {
   var file = this._files[ path ];
   if ( !file ) {
@@ -177,6 +189,7 @@ var _getFile = function( path ) {
   return file;
 };
 
+// Is the file listed in the configuation.
 var _isFileListed = function( path ) {
   if ( !this._config || !this._config.files ) {
     return false;
@@ -191,11 +204,14 @@ var _isFileListed = function( path ) {
   return false;
 };
 
+// Get the dirname of the config path.
 var _getBaseUrl = function( path ) {
   return this._configPath
     .substring( 0, this._configPath.lastIndexOf( '/' ) + 1 );
 };
 
+// Return a promise for the loaded file. Either through block loading or loading
+// the file straight from disk.
 var _loadFile = function( name ) {
   var self = this;
   var baseUrl = _getBaseUrl.call( self );
@@ -217,6 +233,8 @@ var _loadFile = function( name ) {
   return file.complete;
 };
 
+// Load the blocks for a config file and write their file sections to
+// the database.
 var _loadBlocks = function() {
   var allComplete = [];
   var baseUrl =
@@ -273,6 +291,7 @@ var _loadBlocks = function() {
   return when.all( allComplete );
 };
 
+// Load files that have been requested but are not contained in the config.
 var _loadUnlistedFiles = function() {
   var self = this;
   var baseUrl = _getBaseUrl.call( self );
@@ -287,6 +306,7 @@ var _loadUnlistedFiles = function() {
   return when.all( promises );
 };
 
+// Point the Diskette to a configuration file.
 Diskette.prototype.config = function( path ) {
   if ( this._configPath ) {
     throw new Error( 'Diskette configuration path already set.' );
@@ -311,6 +331,7 @@ Diskette.prototype.config = function( path ) {
   }).then( defer.resolve, defer.reject, defer.notify );
 };
 
+// Point the Diskette to a directory.
 Diskette.prototype.fallback = function( path ) {
   if ( this._configPath ) {
     throw new Error( 'Diskette configuration path already set.' );
@@ -333,6 +354,7 @@ Diskette.prototype.fallback = function( path ) {
     });
 };
 
+// Read a file at path from the Diskette. Type can be string, array, or url.
 Diskette.prototype.read = function( path, type ) {
   // We don't hold all contents, so read per request.
   var self = this;
@@ -352,10 +374,7 @@ Diskette.prototype.read = function( path, type ) {
   });
 };
 
+// Shortcut to read( path, 'url' ).
 Diskette.prototype.url = function( path ) {
   return _getFile.call( self, path ).complete.then( _getUrl.bind( this ) );
 };
-
-events.mixin( Diskette.prototype );
-
-Diskette.when = when;
