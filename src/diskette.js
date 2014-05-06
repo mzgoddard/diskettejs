@@ -241,15 +241,22 @@ var _loadBlocks = function() {
     this._configPath.substring( 0, this._configPath.lastIndexOf( '/' ) + 1 );
 
   var self = this;
+
+  // Iterate files and either configure data for loading blocks or
+  // start loading files individually.
   self._config.files.forEach(function( file ) {
     var filePromiseSet = _getFile.call( self, file.name || file );
     filePromiseSet.config =
       typeof file === 'string' ? { name: file } : file;
 
+    // Blocks are defined. Prepare the internal data for loading files
+    // with them.
     if ( file.blocks ) {
+      // Create defers for each block this file relies on.
       filePromiseSet.blocks =
         file.blocks.map(function() { return when.defer(); });
 
+      // Create the promise that waits on the block promises.
       filePromiseSet.complete = when.map(
         filePromiseSet.blocks,
         function( v ) {
@@ -257,24 +264,37 @@ var _loadBlocks = function() {
         }
       ).yield( filePromiseSet.config );
 
+      // Connect the complete promise with the original defer. This way if the
+      // file was requested before we reach this point, the returned promise
+      // will receive the values that any request after this point in time
+      // will receive.
       var complete = filePromiseSet._complete;
       filePromiseSet.complete
         .then( complete.resolve, complete.reject, complete.notify );
+    // Blocks are not defined. Load the files directly.
     } else {
       _loadFile.call( this, file.name || file );
     }
 
+    // Add this promise to the list that will form the diskette's promise that
+    // everything is ready.
     allComplete.push( filePromiseSet.complete );
   }, self );
 
+  // Blocks are defined. Load each block and write their parts to their
+  // related files.
   if ( self._config.blocks ) {
     self._config.blocks.forEach(function( block ) {
+      // Load the block.
       load( baseUrl + block.path, 'binary' ).then(function( data ) {
+        // For each part of the block, write to its file.
         block.ranges.forEach(function( range ) {
           var file = self._files[ range.filename ];
           var fileBlocks = file.blocks;
           var blockDefer = fileBlocks[ range.index ];
 
+          // For this file, after the blocks before this one, write the content
+          // of this block to the database.
           when.all(
             fileBlocks.slice( 0, range.index )
               .map(function( v ) { return v.promise; })
@@ -320,11 +340,16 @@ Diskette.prototype.config = function( path ) {
     _initDb.call( self ),
     load( path, 'string' )
   ]).then(function( values ) {
+    // String data straight from the config file.
     var data = values[ 1 ];
     self._config = JSON.parse( data );
     self._whenConfigDefer.resolve( self._config );
+
+    // Load files that are not in the config but were requested while waiting
+    // for the db and data promises.
     _loadUnlistedFiles.call( self );
 
+    // Load files contained in the config.
     return self._dbPromise.then(function() {
       return _loadBlocks.call( self );
     });
@@ -360,14 +385,18 @@ Diskette.prototype.read = function( path, type ) {
   var self = this;
   return self._whenConfig.then(function() {
     if ( !_isFileListed.call( self, path ) ) {
-      // File is not listed, load normally.
+      // File is not listed, load and write the file to the database.
       return _loadFile.call( self, path ).then(function() {
+        // Get the file's metadata.
         return _getFile.call( self, path ).complete.then(function( file ) {
+          // Read the file from the database.
           return _readFile.call( self, file, type );
         });
       });
     } else {
+      // Get the file's metadata.
       return _getFile.call( self, path ).complete.then(function( file ) {
+        // Read the file from the database.
         return _readFile.call( self, file, type );
       });
     }
